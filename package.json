@@ -1,0 +1,25 @@
+{
+  "name": "buzzer",
+  "version": "1.0.0",
+  "description": "Buzzer for competitions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChocolateLoverRaj/Buzzer.git"
+  },
+  "keywords": [
+    "Buzzer"
+  ],
+  "author": "Rajas Paranjpe",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChocolateLoverRaj/Buzzer/issues"
+  },
+  "homepage": "https://github.com/ChocolateLoverRaj/Buzzer#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
