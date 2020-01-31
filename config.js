@@ -1,7 +1,7 @@
 //Configurations
 
 const config = {
-    port: process.env.PORT | 2000,
+    port: process.env.PORT ? process.env.PORT : 2000,
 };
 
 //Export the module
