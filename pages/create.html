@@ -2,14 +2,39 @@
 <html>
 <head>
     <title>Buzzer Host</title>
+    <script src="/app.js"></script>
 </head>
 <body>
     <h1>Buzzer Host</h1>
     <h2>Create a game</h2>
     <h3>When you create a game, you are the game master / host. To start the game, tell other people to join your game.</h3>
-    <button>Create a game</button>
+    <button id="create">Create a game</button>
     <h2>Not what you're looking for?</h2>
     <a href="/">Home Page</a>
     <a href="/join">Join a Game</a>
+    <script>
+        const create = document.getElementById("create");
+
+        var xhr = false;
+
+        create.onclick = e => {
+            if (!xhr) {
+                //Request to the server
+                xhr = app.request(undefined, "/api/host", "POST", undefined, undefined, (statusCode, payload) => {
+                    if (statusCode == 200) {
+                        //Store the password in localStorage
+                        localStorage.setItem("password", payload.password);
+                        localStorage.setItem("passwordType", "host");
+                        //Go to host
+                        window.location.replace("/host");
+                    }
+                    else {
+                        alert("Error: Couldn't host game.");
+                        window.location.reload();
+                    }
+                });
+            }
+        };
+    </script>
 </body>
 </html>

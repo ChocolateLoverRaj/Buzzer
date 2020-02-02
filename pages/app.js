@@ -33,11 +33,6 @@ app.request = (headers, path, method, queryStringObject, payload, callback) => {
     xhr.open(method, requestURL, true);
     xhr.setRequestHeader("Content-type", "application/json");
 
-    //If there is a current session token, add it as a header
-    if (app.config.sessionToken) {
-        xhr.setRequestHeader("token", app.config.sessionToken.id);
-    }
-
     //For each header sent, add it to the request
     for (var headerKey in headers) {
         if (headers.hasOwnProperty(headerKey)) {

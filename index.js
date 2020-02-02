@@ -60,6 +60,9 @@ app.get("/", (req, res) => {
 app.get("/create", (req, res) => {
     res.sendFile(path.join(__dirname, "./pages/create.html"));
 });
+app.get("/host", (req, res) => {
+    res.sendFile(path.join(__dirname, "./pages/host.html"));
+});
 app.get("/join", (req, res) => {
     res.sendFile(path.join(__dirname, "./pages/join.html"));
 });
