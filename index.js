@@ -13,11 +13,44 @@ const app = express();
 //create a server
 const server = http.Server(app);
 
+//Game classes
+class Game {
+    constructor() {
+        this.id;
+        this.host;
+        this.players = {};
+        this.animals = {};
+        this.animalCount = 0;
+    }
+}
+
+class Host {
+    constructor() {
+        this.game = {};
+        this.password;
+    }
+}
+
+class Player {
+    constructor() {
+        this.password;
+        this.animal;
+        this.game = {};
+    }
+}
+
+class Animal {
+    constructor() {
+        this.name;
+        this.player;
+    }
+}
+
 //Buzzers
 const buzzers = {
     games: {},
-    hostPasswords: {},
-    playerPasswords: {}
+    hosts: {},
+    players: {}
 };
 
 //Static html files
@@ -45,15 +78,20 @@ app.post("/api/host", (req, res) => {
     var password;
     do {
         password = helpers.randomString(config.passwordLength);
-    } while (password in buzzers.hostPasswords);
+    } while (password in buzzers.hosts);
 
-    //Create a game, host, and password
-    buzzers.games[randomId] = {
-        password: password,
-        animals: [],
-        players: {}
-    };
-    buzzers.hostPasswords[password] = randomId;
+    //Create a game and a host
+    var game = buzzers.games[randomId] = new Game();
+    var host = buzzers.hosts[password] = new Host();
+
+    game.id = randomId,
+        game.host = host;
+    host.game = game;
+    host.password = password;
+
+    //Assign them to the buzzer object
+    buzzers.games[randomId] = game;
+    buzzers.hosts[password] = host;
 
     //Send the info to client
     res.json({
@@ -68,12 +106,10 @@ app.post("/api/host", (req, res) => {
 //Get host info
 app.get("/api/host", (req, res) => {
     //Check the password
-    if (req.headers.password in buzzers.hostPasswords) {
-        //Find the game associated with the password
-        var game = buzzers.games[buzzers.hostPasswords[req.headers.password]];
-        //Send details
+    if (req.headers.password in buzzers.hosts) {
+        //Send the host the game id
         res.json({
-            id: buzzers.hostPasswords[req.headers.password]
+            id: buzzers.hosts[req.headers.password].game.id
         });
 
         //Send
@@ -84,7 +120,7 @@ app.get("/api/host", (req, res) => {
     }
 });
 
-//Join a host
+//Join a game
 app.post("/api/join", (req, res) => {
     //Check if the host exists
     if (req.query.game in buzzers.games) {
@@ -92,22 +128,29 @@ app.post("/api/join", (req, res) => {
         var password;
         do {
             password = helpers.randomString(config.passwordLength);
-        } while (password in buzzers.playerPasswords);
+        } while (password in buzzers.players);
 
-        //Assign a random animal to the person, making sure it is unique
-        var animal;
-        if (buzzers.games[req.query.game].animals.length < config.animals.length) {
+        //Assign a random animalName to the person, making sure it is unique
+        if (buzzers.games[req.query.game].animalCount < config.animals.length) {
+            var animalName;
             do {
-                animal = config.animals[Math.floor(Math.random() * config.animals.length)];
-            } while (buzzers.games[req.query.game].animals.includes(animal));
+                animalName = config.animals[Math.floor(Math.random() * config.animals.length)];
+            } while (animalName in buzzers.games[req.query.game].animals);
 
             //Add the animal and the player to game
-            buzzers.games[req.query.game].animals.push(animal);
-            buzzers.games[req.query.game].players[password] = animal;
-            buzzers.playerPasswords[password] = {
-                game: req.query.game,
-                animal: animal
-            };
+            var player = new Player();
+            var animal = new Animal();
+
+            player.animal = animal;
+            player.password = password;
+            player.game = buzzers.games[req.query.game];
+            animal.name = animalName;
+            animal.player = player;
+
+            buzzers.games[req.query.game].animalCount++;
+            buzzers.games[req.query.game].animals[animalName] = animal;
+            buzzers.games[req.query.game].players[animalName] = player;
+            buzzers.players[password] = player;
 
             //Send the info to client
             res.json({
@@ -126,12 +169,15 @@ app.post("/api/join", (req, res) => {
     }
 });
 
-//Play a host
+//Play a game
 app.get("/api/join", (req, res) => {
     //Check password
-    if (buzzers.playerPasswords[req.headers.password]) {
+    if (buzzers.players[req.headers.password]) {
         //Send their info
-        res.json(buzzers.playerPasswords[req.headers.password]);
+        res.json({
+            animal: buzzers.players[req.headers.password].animal.name,
+            game: buzzers.players[req.headers.password].game.id
+        });
     }
     else {
         res.sendStatus(404);
