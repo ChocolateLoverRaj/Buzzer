@@ -53,7 +53,7 @@ const buzzers = {
     players: {}
 };
 
-//Static html files
+//Static files
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "./pages/index.html"));
 });
@@ -62,6 +62,9 @@ app.get("/create", (req, res) => {
 });
 app.get("/join", (req, res) => {
     res.sendFile(path.join(__dirname, "./pages/join.html"));
+});
+app.get("/app.js", (req, res) => {
+    res.sendFile(path.join(__dirname, "./pages/app.js"));
 });
 
 //Logic
