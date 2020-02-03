@@ -2,6 +2,7 @@
 
 //Dependancies
 const express = require('express');
+const socketIO = require('socket.io');
 const http = require('http');
 const path = require('path');
 const config = require("./config");
@@ -13,6 +14,16 @@ const app = express();
 //create a server
 const server = http.Server(app);
 
+//Get the socket io
+const io = socketIO(server);
+
+//Buzzers
+const buzzers = {
+    games: {},
+    hosts: {},
+    players: {}
+};
+
 //Game classes
 class Game {
     constructor() {
@@ -22,12 +33,24 @@ class Game {
         this.animals = {};
         this.animalCount = 0;
     }
+    delete() {
+        //Delete all outside references
+        for (var animalName in this.players) {
+            this.players[animalName].delete();
+        }
+        delete buzzers.games[this.id];
+
+        //Delete self references
+        delete buzzers.hosts[this.host.password];
+        delete this.host;
+    }
 }
 
 class Host {
     constructor() {
         this.game = {};
         this.password;
+        this.socket = {};
     }
 }
 
@@ -36,6 +59,19 @@ class Player {
         this.password;
         this.animal;
         this.game = {};
+        this.socket = {};
+    }
+    delete() {
+        //Delete all outside references
+        delete buzzers.games[this.game.id].players[this.animal.name];
+        delete buzzers.games[this.game.id].animals[this.animal.name];
+        buzzers.games[this.game.id].animalCount--;
+        delete buzzers.players[this.password];
+
+        //Delete self references
+        delete this.socket;
+        delete this.game;
+        delete this.animal;
     }
 }
 
@@ -45,13 +81,6 @@ class Animal {
         this.player;
     }
 }
-
-//Buzzers
-const buzzers = {
-    games: {},
-    hosts: {},
-    players: {}
-};
 
 //Static files
 app.get("/", (req, res) => {
@@ -126,6 +155,24 @@ app.get("/api/host", (req, res) => {
     }
 });
 
+//Disband a game
+app.delete("/api/host", (req, res) => {
+    //Check the password
+    if (req.headers.password in buzzers.hosts) {
+        //@TODO send socket disband message
+        //Delete the game, host, and all the players in the game
+        buzzers.hosts[req.headers.password].game.delete();
+
+        //Send
+        res.sendStatus(200);
+
+        console.log(buzzers);
+    }
+    else {
+        res.sendStatus(404);
+    }
+});
+
 //Join a game
 app.post("/api/join", (req, res) => {
     //Check if the host exists
@@ -188,6 +235,47 @@ app.get("/api/join", (req, res) => {
     else {
         res.sendStatus(404);
     }
+});
+
+//Leave a game
+app.delete("/api/join", (req, res) => {
+    //Check password
+    if (buzzers.players[req.headers.password]) {
+        //Delete them and their animal
+        var player = buzzers.players[req.headers.password];
+        var game = player.game;
+        player.delete();
+
+        res.sendStatus(200);
+        console.log(game.animals);
+        console.log(buzzers);
+    }
+    else {
+        res.sendStatus(404);
+    }
+});
+
+//Handle sockets
+io.sockets.on("connection", socket => {
+    //Listen for password
+    socket.once("password", data => {
+        if (data.password) {
+            if (data.type == "host") {
+                //Try to find that host
+                if (data.password in buzzers.hosts) {
+                    //Connect the socket
+                    buzzers.hosts[data.password].socket = socket;
+                }
+            }
+            else if (data.type == "player") {
+                //Try to find that player
+                if (data.password in buzzers.players) {
+                    //Connect the socket
+                    buzzers.players[data.password].socket = socket;
+                }
+            }
+        }
+    });
 });
 
 server.listen(config.port);
