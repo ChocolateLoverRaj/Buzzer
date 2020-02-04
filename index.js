@@ -258,6 +258,7 @@ app.delete("/api/join", (req, res) => {
 //Handle sockets
 io.sockets.on("connection", socket => {
     //Listen for password
+    console.log("connected");
     socket.once("password", data => {
         if (data.password) {
             if (data.type == "host") {
@@ -265,6 +266,7 @@ io.sockets.on("connection", socket => {
                 if (data.password in buzzers.hosts) {
                     //Connect the socket
                     buzzers.hosts[data.password].socket = socket;
+                    console.log(buzzers.hosts);
                 }
             }
             else if (data.type == "player") {

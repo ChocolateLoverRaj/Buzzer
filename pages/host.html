@@ -3,48 +3,57 @@
 <head>
     <title>Buzzer Host</title>
     <script src="/app.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <style>
-        html, body{
+        html, body {
             background-color: pink;
         }
+
         * {
             margin: 0;
             padding: 0;
         }
-        #top{
+
+        #top {
             background-color: dodgerblue;
             padding: 25px;
         }
-        #code{
+
+        #code {
             background-color: mediumseagreen;
             padding: 15px;
             border-radius: 1000000px;
         }
-        #options{
+
+        #options {
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 25px;
         }
-        #options *{
-            height: 100%;
-            margin-left: 50px;
-        }
-        #start{
+
+            #options * {
+                height: 100%;
+                margin-left: 50px;
+            }
+
+        #start {
             height: 50px;
             width: 100px;
             background-color: green;
             color: white;
             border-radius: 10000px;
         }
-        #disband{
+
+        #disband {
             height: 50px;
             width: 100px;
             background-color: red;
             color: white;
             border-radius: 10000px;
         }
-        #bottom{
+
+        #bottom {
             display: inline-grid;
             grid-gap: 0;
             width: 100%;
@@ -53,45 +62,55 @@
             align-content: center;
             text-align: center;
         }
-        #players{
+
+        #players {
             max-height: 300px;
             overflow-y: auto;
         }
-        .player{
+
+        .player {
             display: block;
             border-radius: 1000000px;
             margin-top: 10px;
             padding: 25px;
             background-color: white;
         }
-        .header{
+
+        .header {
             padding: 25px;
-            border-bottom: 5px solid yellow;    
+            border-bottom: 5px solid yellow;
         }
-        #results{
+
+        #results {
             max-height: 300px;
             overflow-y: auto;
         }
-        .result{
+
+        .result {
             display: block;
             border-radius: 1000000px;
             margin-top: 10px;
             padding: 25px;
             background-color: white;
         }
-        .result[place="first"]{
-            background-color: gold;
-        }
-        .result[place="second"]{
-            background-color: silver;
-        }
-        .result[place="third"]{
-            background-color: brown;
-        }
-        .result[fail]{
-            background-color: red;
-        }
-        .hidden{
+
+            .result[place="first"] {
+                background-color: gold;
+            }
+
+            .result[place="second"] {
+                background-color: silver;
+            }
+
+            .result[place="third"] {
+                background-color: brown;
+            }
+
+            .result[fail] {
+                background-color: red;
+            }
+
+        .hidden {
             display: none;
         }
     </style>
@@ -127,12 +146,18 @@
         </div>
     </div>
     <script>
+        const socket = io();
+
         const code = document.getElementById("code");
         //Try to get password
         if (localStorage.getItem("password")) {
             //Try to get info
             app.request({ password: localStorage.getItem("password") }, "/api/host", "GET", undefined, undefined, (statusCode, payload) => {
                 if (statusCode == 200) {
+                    socket.emit("password", {
+                        password: localStorage.getItem("password"),
+                        type: "host"
+                    });
                     code.innerHTML = payload.id;
                 }
                 else {
