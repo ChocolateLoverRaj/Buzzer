@@ -2,8 +2,73 @@
 <html>
 <head>
     <title>Buzzer Host</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: blue;
+        }
+        #header{
+            margin: 0;
+            padding: 50px;
+            background-color: lightblue;
+        }
+        #animal{
+            padding: 25px;
+            background-color: yellow;
+            border-radius: 10000px;
+        }
+        #main{
+            position: relative;
+            width: 400px;
+            height: 400px;
+            left: calc(50% - 200px);
+        }
+        #button{
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            left: 25%;
+            top: 25%;
+            background-color: mediumseagreen;
+            border-radius: 100000000px;
+            color: white;
+            cursor: pointer;
+        }
+        #buzz{
+            position: absolute;
+            top: 35%;
+            width: 100%;
+        }
+        #message{
+            top: -20%;
+            position: absolute;
+            display: none;
+            width: 100%;
+            font-size: 100px;
+        }
+        #message[type="normal"]{
+            color: white;
+            display: block
+        }
+        #message[type="bad"]{
+            color: red;
+            display: block;
+        }
+        #message[type="good"]{
+            color: green;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <h1>Buzzer Host - Playing Game. Animal: <span>Zebra</span></h1>
+    <h1 id="header">Buzzer Host - Playing Game. Animal: <span id="animal">Zebra</span></h1>
+    <div id="main">
+        <div id="button">
+            <h1 id="buzz">BUZZ</h1>
+        </div>
+        <h1 id="message">READY</h1>
+    </div>
 </body>
 </html>
