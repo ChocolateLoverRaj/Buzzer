@@ -13,11 +13,18 @@
             margin: 0;
             padding: 50px;
             background-color: lightblue;
+            color: seagreen;
+        }
+        .cool{
+            padding: 25px;
+            border-radius: 10000px;
         }
         #animal{
-            padding: 25px;
             background-color: yellow;
-            border-radius: 10000px;
+        }
+        #leave{
+            background-color: red;
+            cursor: pointer; 
         }
         #main{
             position: relative;
@@ -34,6 +41,9 @@
             background-color: mediumseagreen;
             border-radius: 100000000px;
             color: white;
+            cursor: not-allowed;
+        }
+        #button[enabled]{
             cursor: pointer;
         }
         #buzz{
@@ -63,12 +73,62 @@
     </style>
 </head>
 <body>
-    <h1 id="header">Buzzer Host - Playing Game. Animal: <span id="animal">Zebra</span></h1>
+    <h1 id="header">Buzzer Host - Playing Game. Animal: <span class="cool" id="animal">Zebra</span> <span class="cool" id="leave">Leave</span></h1>
     <div id="main">
         <div id="button">
             <h1 id="buzz">BUZZ</h1>
         </div>
         <h1 id="message">READY</h1>
     </div>
+    <script>
+        //const socket = io();
+        
+        const button = document.getElementById("button");
+        const message = document.getElementById("message");
+        
+        var enabled = false;
+        var countdown = [];
+        
+        button.onclick = e => {
+             if(enabled){
+                enabled = false;
+                button.removeAttribute("enabled");
+                cancelCountdown();
+                //socket.emit("buzz");
+                /*socket.once("buzzed", () => {
+                    message.setAttribute("type", "good");
+                    message.innerHTML = "BUZZED";
+                });*/ 
+             }
+        };
+        
+        function cancelCountdown(){
+            countdown.forEach(timeout => {
+                clearTimeout(timeout);
+            });
+        };
+        
+        function canBuzz(time){
+            //Show ready
+            message.setAttribute("type", "normal");
+            message.innerHTML = "READY";
+            //calculate when to show go
+            var timeUntilGo = time - Date.now();
+            //Set timeout
+            setTimeout(function(){
+                message.innerHTML = "GO!";
+                button.setAttribute("enabled", undefined);
+                enabled = true;
+                
+                //Show the countdown
+                for(let i = 1; i <= 5; i++){
+                    countdown.push(setTimeout(function(){
+                        message.setAttribute("type", "bad");
+                        message.innerHTML = (5 - i) == 0 ? "TOO LATE" : (5 - i);
+                    }, i * 1000));
+                }
+            }, timeUntilGo);
+        }
+    </script>
 </body>
 </html>
