@@ -193,6 +193,8 @@
         disband.onclick = e => {
             app.request({ password: localStorage.getItem("password") }, "/api/host", "DELETE", undefined, undefined, (statusCode, payload) => {
                 if (statusCode == 200) {
+                    //Remove the password
+                    localStorage.removeItem("password");
                     window.location.replace("/");
                 }
                 else {
