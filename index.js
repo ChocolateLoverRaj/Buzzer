@@ -8,6 +8,7 @@ const http = require('http');
 const path = require('path');
 const config = require("./config");
 const helpers = require("./lib/helpers");
+const timesync = require("timesync/server");
 
 //Get the express app
 const app = express();
@@ -178,6 +179,9 @@ class Animal {
 
 //Favicon
 app.use(favicon(__dirname + "/pages/favicon.ico"));
+
+//Time sync
+app.use("/timesync", timesync.requestHandler);
 
 //Static files
 app.get("/", (req, res) => {
