@@ -141,53 +141,58 @@
             alert("You are not playing a game");
             window.location.replace("/join");
         }
-        
+
         const button = document.getElementById("button");
         const message = document.getElementById("message");
-        
+
         var enabled = false;
-        var countdown = [];
-        
+        var countdown;
+        var secondsLeft;
+
         button.onclick = e => {
-             if(enabled){
+            if (enabled) {
                 enabled = false;
                 button.removeAttribute("enabled");
-                cancelCountdown();
+                clearInterval(countdown);
                 socket.emit("buzz");
                 socket.once("buzzed", () => {
                     message.setAttribute("type", "good");
                     message.innerText = "BUZZED";
                 });
-             }
+            }
         };
-        
-        function cancelCountdown(){
-            countdown.forEach(timeout => {
-                clearTimeout(timeout);
-            });
-        };
-        
+
+        function showMessage(str, type = "normal") {
+            message.innerText = str;
+            message.setAttribute("type", type);
+        }
+
         socket.on("canBuzz", function (time) {
             //Show ready
             message.setAttribute("type", "normal");
             message.innerText = "READY";
             //calculate when to show go
             var timeUntilGo = time - Date.now();
-            //Reset countdowns
-            countdown = [];
             //Set timeout
             setTimeout(function () {
-                message.innerText = "GO!";
-                button.setAttribute("enabled", undefined);
+                showMessage("GO!");
+                //Enable
                 enabled = true;
-
-                //Show the countdown
-                for (let i = 1; i <= 5; i++) {
-                    countdown.push(setTimeout(function () {
-                        message.setAttribute("type", "bad");
-                        message.innerText = (5 - i) == 0 ? "TOO LATE" : (5 - i);
-                    }, i * 1000));
-                }
+                button.setAttribute("enabled", "enabled");
+                //Countdown
+                secondsLeft = 4;
+                countdown = setInterval(() => {
+                    if (secondsLeft > 0) {
+                        showMessage(secondsLeft, "bad");
+                        secondsLeft--;
+                    }
+                    else {
+                        showMessage("Too Late", "bad");
+                        clearInterval(countdown);
+                        button.removeAttribute("enabled");
+                        enabled = false;
+                    }
+                }, 1000);
             }, timeUntilGo);
         });
     </script>

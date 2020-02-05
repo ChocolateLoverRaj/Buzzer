@@ -60,14 +60,17 @@ class Game {
         clearTimeout(this.host.disconnectTimeout);
         delete this.host;
     }
-    onBuzz(animal) {
-        //Echo back
-        this.players[animal].socket.emit("buzzed");
-        //Add to list of animals
-        this.buzzes.push(animal);
-        //Send the list to the host
-        if (this.host.socket.emit) {
-            this.host.socket.emit("results", this.buzzes);
+    onBuzz(animal, endTime) {
+        //Make sure that the time hasn't expired
+        if (Date.now() < endTime) {
+            //Echo back
+            this.players[animal].socket.emit("buzzed");
+            //Add to list of animals
+            this.buzzes.push(animal);
+            //Send the list to the host
+            if (this.host.socket.emit) {
+                this.host.socket.emit("results", this.buzzes);
+            }
         }
     }
     enableBuzzing() {
@@ -80,18 +83,12 @@ class Game {
                 this.players[animal].socket.emit("canBuzz", startTime);
                 //Start checking for the buzz at start time
                 setTimeout(() => {
-                    this.players[animal].socket.once("buzz", this.onBuzz.bind(this, animal));
+                    this.players[animal].socket.once("buzz", this.onBuzz.bind(this, animal, startTime + 5000));
                 }, startTime - Date.now());
             }
         }
         //End after 5 seconds after start time
         setTimeout(() => {
-            //Cancel all the listeners
-            for (let animal in this.players) {
-                if (this.players[animal].socket.once) {
-                    this.players[animal].socket.removeListener("buzz", this.onBuzz.bind(this));
-                }
-            }
             //Send done
             if (this.host.socket.emit) {
                 this.host.socket.emit("done");
