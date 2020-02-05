@@ -128,7 +128,7 @@
                         password: localStorage.getItem("password"),
                         type: "player"
                     });
-                    animal.innerHTML = payload.animal;
+                    animal.innerText = payload.animal;
                 }
                 else {
                     alert("Your game no longer exists");
@@ -156,7 +156,7 @@
                 socket.emit("buzz");
                 socket.once("buzzed", () => {
                     message.setAttribute("type", "good");
-                    message.innerHTML = "BUZZED";
+                    message.innerText = "BUZZED";
                 });
              }
         };
@@ -170,12 +170,14 @@
         socket.on("canBuzz", function (time) {
             //Show ready
             message.setAttribute("type", "normal");
-            message.innerHTML = "READY";
+            message.innerText = "READY";
             //calculate when to show go
             var timeUntilGo = time - Date.now();
+            //Reset countdowns
+            countdown = [];
             //Set timeout
             setTimeout(function () {
-                message.innerHTML = "GO!";
+                message.innerText = "GO!";
                 button.setAttribute("enabled", undefined);
                 enabled = true;
 
@@ -183,7 +185,7 @@
                 for (let i = 1; i <= 5; i++) {
                     countdown.push(setTimeout(function () {
                         message.setAttribute("type", "bad");
-                        message.innerHTML = (5 - i) == 0 ? "TOO LATE" : (5 - i);
+                        message.innerText = (5 - i) == 0 ? "TOO LATE" : (5 - i);
                     }, i * 1000));
                 }
             }, timeUntilGo);
