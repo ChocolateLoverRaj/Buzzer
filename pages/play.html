@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buzzer Host</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: blue;
+        }
+
+        #header {
+            margin: 0;
+            padding: 50px;
+            background-color: lightblue;
+            color: seagreen;
+        }
+
+        .cool {
+            padding: 25px;
+            border-radius: 10000px;
+        }
+
+        #animal {
+            background-color: yellow;
+        }
+
+        #leave {
+            background-color: red;
+            cursor: pointer;
+        }
+
+        #main {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            left: calc(50% - 200px);
+        }
+
+        #button {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            left: 25%;
+            top: 25%;
+            background-color: mediumseagreen;
+            border-radius: 100000000px;
+            color: white;
+            cursor: not-allowed;
+        }
+
+            #button[enabled] {
+                cursor: pointer;
+            }
+
+        #buzz {
+            position: absolute;
+            top: 35%;
+            width: 100%;
+        }
+
+        #message {
+            top: -20%;
+            position: absolute;
+            display: none;
+            width: 100%;
+            font-size: 100px;
+        }
+
+            #message[type="normal"] {
+                color: white;
+                display: block
+            }
+
+            #message[type="bad"] {
+                color: red;
+                display: block;
+            }
+
+            #message[type="good"] {
+                color: green;
+                display: block;
+            }
+    </style>
+    <script src="/app.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+</head>
+<body>
+    <h1 id="header">Buzzer Host - Playing Game. Animal: <span class="cool" id="animal">Zebra</span> <span class="cool" id="leave">Leave</span></h1>
+    <div id="main">
+        <div id="button">
+            <h1 id="buzz">BUZZ</h1>
+        </div>
+        <h1 id="message">READY</h1>
+    </div>
+    <script>
+        const socket = io();
+
+        const animal = document.getElementById("animal");
+        const leave = document.getElementById("leave");
+
+        //Detect disband
+        socket.on("disbanded", () => {
+            alert("Your game has been disbanded");
+            localStorage.removeItem("password");
+            window.location.replace("/join");
+        });
+
+        leave.onclick = e => {
+            app.request({ password: localStorage.getItem("password") }, "/api/join", "DELETE", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    //Redirect
+                    window.location.replace("/");
+                }
+                else {
+                    alert("Could not leave game");
+                }
+            });
+        };
+
+        //Try to get password
+        if (localStorage.getItem("password")) {
+            //Try to get info
+            app.request({ password: localStorage.getItem("password") }, "/api/join", "GET", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    socket.emit("password", {
+                        password: localStorage.getItem("password"),
+                        type: "player"
+                    });
+                    animal.innerHTML = payload.animal;
+                }
+                else {
+                    alert("Your game no longer exists");
+                    localStorage.removeItem("password");
+                    window.location.replace("/join");
+                }
+            });
+        }
+        else {
+            alert("You are not playing a game");
+            window.location.replace("/join");
+        }
+        
+        const button = document.getElementById("button");
+        const message = document.getElementById("message");
+        
+        var enabled = false;
+        var countdown = [];
+        
+        button.onclick = e => {
+             if(enabled){
+                enabled = false;
+                button.removeAttribute("enabled");
+                cancelCountdown();
+                socket.emit("buzz");
+                socket.once("buzzed", () => {
+                    message.setAttribute("type", "good");
+                    message.innerHTML = "BUZZED";
+                });
+             }
+        };
+        
+        function cancelCountdown(){
+            countdown.forEach(timeout => {
+                clearTimeout(timeout);
+            });
+        };
+        
+        socket.on("canBuzz", function (time) {
+            //Show ready
+            message.setAttribute("type", "normal");
+            message.innerHTML = "READY";
+            //calculate when to show go
+            var timeUntilGo = time - Date.now();
+            //Set timeout
+            setTimeout(function () {
+                message.innerHTML = "GO!";
+                button.setAttribute("enabled", undefined);
+                enabled = true;
+
+                //Show the countdown
+                for (let i = 1; i <= 5; i++) {
+                    countdown.push(setTimeout(function () {
+                        message.setAttribute("type", "bad");
+                        message.innerHTML = (5 - i) == 0 ? "TOO LATE" : (5 - i);
+                    }, i * 1000));
+                }
+            }, timeUntilGo);
+        });
+    </script>
+</body>
+</html>

@@ -2,12 +2,67 @@
 <html>
 <head>
     <title>Buzzer Host</title>
+    <style>
+        html, body{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #explainer{
+            margin: 0;
+            padding: 50;
+            text-align: center;
+            background-color: cornflowerblue;
+        }
+        #explainer *{
+            margin: 0; 
+            padding: 25px;
+            color: purple;
+        }
+        #grid {
+            display: grid;
+            grid-template-columns: 50% 50%;
+            text-align: center;
+        }
+        #create{
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background-color: orange;
+            color: white;
+        }
+        #join{
+            position: absolute;
+            width: 50%;
+            left: 50%;
+            height: 100%;
+            background-color: green;
+            color: white;
+        }
+        #create *, #join *{
+            padding: 50px;
+        }
+    </style>
+    <script src="/app.js"></script>
 </head>
 <body>
-    <h1>Buzzer Host</h1>
-    <h2>What is Buzzer Host?</h2>
-    <h3>Buzzer Host is a free to use tool that is good for buzzers. Create a game and tell the competitors to enter the code.</h3>
-    <a href="/create">Host a Game</a>
-    <a href="/join">Join a Game</a>
+    <div id="explainer">
+        <h1>Buzzer Host</h1>
+        <h2>What is Buzzer Host?</h2>
+        <h3>Buzzer Host is a free to use tool that is good for buzzers. Create a game and tell the competitors to enter the code.</h3>
+    </div>
+    <div id="grid">
+        <div id="create">
+            <h1>I want to create my own game for others to join.</h1>
+            <h1><a href="/create">Host a Game</a></h1>
+        </div>
+        <div id="join">
+            <h1>I want to join a game that someone else has created</h1>
+            <h1><a href="/join">Join a Game</a></h1>
+        </div>
+    </div>
+    <script>
+        app.check();
+    </script>
 </body>
 </html>

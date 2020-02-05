@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buzzer Host</title>
+    <script src="/app.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <style>
+        html, body {
+            background-color: pink;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
+
+        #top {
+            background-color: dodgerblue;
+            padding: 25px;
+        }
+
+        #code {
+            background-color: mediumseagreen;
+            padding: 15px;
+            border-radius: 1000000px;
+        }
+
+        #options {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+        }
+
+        #options * {
+            height: 100%;
+            margin-left: 50px;
+        }
+
+        #start {
+            height: 50px;
+            width: 100px;
+            background-color: green;
+            color: white;
+            border-radius: 10000px;
+        }
+
+        #disband {
+            height: 50px;
+            width: 100px;
+            background-color: red;
+            color: white;
+            border-radius: 10000px;
+        }
+
+        #bottom {
+            display: inline-grid;
+            grid-gap: 0;
+            width: 100%;
+            grid-template-columns: 50% 50%;
+            grid-template-rows: auto;
+            align-content: center;
+            text-align: center;
+        }
+
+        #players {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player {
+            display: block;
+            border-radius: 1000000px;
+            margin-top: 10px;
+            padding: 25px;
+            background-color: black;
+        }
+
+        .header {
+            padding: 25px;
+            border-bottom: 5px solid yellow;
+        }
+
+        #results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result {
+            display: block;
+            border-radius: 1000000px;
+            margin-top: 10px;
+            padding: 25px;
+            background-color: black;
+        }
+
+        .result[place="first"] {
+            background-color: gold;
+        }
+
+        .result[place="second"] {
+            background-color: silver;
+        }
+
+        .result[place="third"] {
+            background-color: brown;
+        }
+
+        .result[fail] {
+            background-color: red;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2 id="top">Buzzer Host - You are currently hosting a game. Game code for players to join: <span id="code">w3ww3w</span></h2>
+    <div id="options">
+        <h1>Allow Joining</h1>
+        <input id="allow" style="height:50px;" type="checkbox" checked>
+        <button id="start">Start</button>
+        <button id="disband">Disband</button>
+    </div>
+    <div id="bottom">
+        <div>
+            <div class="header">
+                <h2>Players</h2>
+            </div>
+            <div id="players">
+            </div>
+            <h2 class="player hidden" id="player">Animal</h2>
+        </div>
+        <div>
+            <div class="header">
+                <h2>Results</h2>
+            </div>
+            <div id="results">
+                <h2 class="result hidden" place="first" id="result1">Animal</h2>
+                <h2 class="result hidden" place="second" id="result2">Animal</h2>
+                <h2 class="result hidden" place="third" id="result3">Animal</h2>
+                <h2 class="result hidden" place="" id="result4">Animal</h2>
+                <h2 class="result hidden" place="" id="result5">Animal</h2>
+            </div>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+
+        const allow = document.getElementById("allow");
+        const start = document.getElementById("start");
+        const disband = document.getElementById("disband");
+
+        var allowedToStart = true;
+
+        //Enable / disable joining
+        allow.oninput = e => {
+            var prev = !allow.checked;
+            app.request({ password: localStorage.getItem("password") }, "/api/host", "PUT", { enabled: allow.checked ? true : false }, undefined, (statusCode, payload) => {
+                if (statusCode != 200) {
+                    allow.checked = prev;
+                }
+            });
+        };
+
+        //Start / enable buzzing
+        start.onclick = e => {
+            start.innerHTML = "Starting";
+            //Clear results
+            showResults([]);
+            start.setAttribute("disabled", undefined);
+            app.request({ password: localStorage.getItem("password") }, "/api/start", "POST", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    start.innerHTML = "Buzzable";
+                    //Wait for thing to be done
+                    socket.once("done", () => {
+                        start.removeAttribute("disabled");
+                        start.innerHTML = "Start";
+                        allowedToStart = true;
+                    });
+                }
+                else {
+                    alert("Could not start");
+                    start.innerHTML = "Start";
+                    start.removeAttribute("disabled");
+                }
+            });
+        };
+
+        //Disband
+        disband.onclick = e => {
+            app.request({ password: localStorage.getItem("password") }, "/api/host", "DELETE", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    window.location.replace("/");
+                }
+                else {
+                    alert("Couldn't disband party");
+                }
+            });
+        };
+
+        const code = document.getElementById("code");
+        //Try to get password
+        if (localStorage.getItem("password")) {
+            //Try to get info
+            app.request({ password: localStorage.getItem("password") }, "/api/host", "GET", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    socket.emit("password", {
+                        password: localStorage.getItem("password"),
+                        type: "host"
+                    });
+                    allow.checked = payload.joiningAllowed;
+                    code.innerHTML = payload.id;
+                }
+                else {
+                    alert("Your game no longer exists");
+                    localStorage.removeItem("password");
+                    window.location.replace("/create");
+                }
+            });
+        }
+        else {
+            alert("You are not hosting a game");
+            window.location.replace("/create");
+        }
+
+
+        //Show players
+        const players = document.getElementById("players");
+        const player = document.getElementById("player");
+        function showPlayers(names) {
+            players.innerHTML = "";
+            names.forEach(name => {
+                var newPlayer = player.cloneNode(true);
+                newPlayer.removeAttribute("id");
+                newPlayer.classList.remove("hidden");
+                newPlayer.innerHTML = name;
+                players.appendChild(newPlayer);
+            });
+        };
+
+        //Show results
+        const results = [document.getElementById("result1"), document.getElementById("result2"), document.getElementById("result3"), document.getElementById("result4"), document.getElementById("result5")];
+        function showResults(data) {
+            for (var i = 0; i < 5; i++) {
+                if (i in data) {
+                    results[i].classList.remove("hidden");
+                    results[i].innerText = data[i];
+                }
+                else {
+                    results[i].classList.add("hidden");
+                }
+            }
+        };
+
+        socket.on("results", animals => {
+            showResults(animals);
+        });
+        socket.on("players", animals => {
+            showPlayers(animals);
+        });
+    </script>
+</body>
+</html>

@@ -2,18 +2,125 @@
 <html>
 <head>
     <title>Buzzer Host</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #explainer {
+            margin: 0;
+            padding: 50px;
+            text-align: center;
+            background-color: lightblue;
+        }
+
+            #explainer * {
+                margin: 0;
+                padding: 25px;
+                color: purple;
+            }
+
+        #grid {
+            display: grid;
+            grid-template-columns: 50% 50%;
+            text-align: center;
+        }
+
+        #enter {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background-color: gold;
+            color: forestgreen;
+        }
+
+        #not {
+            position: absolute;
+            width: 50%;
+            left: 50%;
+            height: 100%;
+            background-color: forestgreen;
+            color: white;
+        }
+
+            #enter *, #not * {
+                padding: 25px;
+            }
+
+        #code {
+            padding: 0px;
+            width: 300px;
+            text-align: center;
+            color: forestgreen;
+            border: 5px solid forestgreen;
+            font-size: 50px;
+        }
+
+        #join {
+            width: 300px;
+            background-color: forestgreen;
+            border-radius: 100000px;
+            color: white;
+            font-size: 50px;
+        }
+    </style>
+    <script src="/app.js"></script>
 </head>
 <body>
-    <h1>Buzzer Host</h1>
-    <h2>Join a game</h2>
-    <h3>Join a game by entering a game code that your game master has created.</h3>
-    <form>
-        <h3>Enter your game code.</h3>
-        <input type="text" maxlength="6" />
-        <button>Join</button>
-    </form>
-    <h2>Not what you're looking for?</h2>
-    <a href="/">Home Page</a>
-    <a href="/create">Host a Game</a>
+    <div id="explainer">
+        <h1>Buzzer Host</h1>
+        <h2>Join a game</h2>
+        <h3>Join a game by entering a game code that your game master has created.</h3>
+    </div>
+    <div id="grid">
+        <div id="enter">
+            <h1>Enter your game code.</h1>
+            <form id="form">
+                <input name="code" type="text" id="code" maxlength="6">
+                <br>
+                <button name="join" id="join">Join</button>
+            </form>
+        </div>
+        <div id="not">
+            <h1>Not what you're looking for?</h1>
+            <h1><a href="/">Main Page</a></h1>
+            <h1><a href="/create">Create a Game</a></h1>
+        </div>
+    </div>
+    <script>
+        app.check();
+
+        const form = document.getElementById("form");
+        
+        form.onsubmit = e => {
+            e.preventDefault();
+
+            if (form.code.value.trim().length == 6) {
+                //Try to join via REST.
+                app.request(undefined, "/api/join", "POST", { game: form.code.value }, undefined, (statusCode, payload) => {
+                    if (statusCode == 200) {
+                        //Store the stuffs
+                        localStorage.setItem("password", payload.password);
+                        localStorage.setItem("passwordType", "player");
+
+                        //Redirect to play
+                        window.location.replace("/play");
+                    }
+                    else if (statusCode == 404) {
+                        alert("Invalid code");
+                    }
+                    else {
+                        alert("Could not join game");
+                        window.location.reload();
+                    }
+                });
+            }
+            else {
+                alert("Invalid code");
+            }
+        };
+    </script>
 </body>
 </html>
