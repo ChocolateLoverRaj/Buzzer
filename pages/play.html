@@ -85,6 +85,7 @@
     </style>
     <script src="/app.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="/timesync/timesync.js"></script>
 </head>
 <body>
     <h1 id="header">Buzzer Host - Playing Game. Animal: <span class="cool" id="animal">Zebra</span> <span class="cool" id="leave">Leave</span></h1>
@@ -95,6 +96,12 @@
         <h1 id="message">READY</h1>
     </div>
     <script>
+        // create a timesync instance
+        var ts = timesync.create({
+            server: "/timesync",
+            interval: 10000
+        });
+
         const socket = io();
 
         const animal = document.getElementById("animal");
@@ -172,7 +179,7 @@
             message.setAttribute("type", "normal");
             message.innerText = "READY";
             //calculate when to show go
-            var timeUntilGo = time - Date.now();
+            var timeUntilGo = time - ts.now();
             //Set timeout
             setTimeout(function () {
                 showMessage("GO!");
