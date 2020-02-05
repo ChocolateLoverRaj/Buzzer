@@ -68,3 +68,15 @@ app.request = (headers, path, method, queryStringObject, payload, callback) => {
     //Return the xhr object
     return xhr;
 };
+
+//Automatically check for game
+app.check = () => {
+    if (localStorage.getItem("password")) {
+        if (localStorage.getItem("passwordType") == "player") {
+            window.location.replace("/play");
+        }
+        else if (localStorage.getItem("passwordType") == "host") {
+            window.location.replace("/host");
+        }
+    }
+};

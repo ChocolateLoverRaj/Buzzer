@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Buzzer Host</title>
@@ -12,6 +12,7 @@
         * {
             margin: 0;
             padding: 0;
+            color: white;
         }
 
         #top {
@@ -32,10 +33,10 @@
             padding: 25px;
         }
 
-            #options * {
-                height: 100%;
-                margin-left: 50px;
-            }
+        #options * {
+            height: 100%;
+            margin-left: 50px;
+        }
 
         #start {
             height: 50px;
@@ -73,7 +74,7 @@
             border-radius: 1000000px;
             margin-top: 10px;
             padding: 25px;
-            background-color: white;
+            background-color: black;
         }
 
         .header {
@@ -91,24 +92,24 @@
             border-radius: 1000000px;
             margin-top: 10px;
             padding: 25px;
-            background-color: white;
+            background-color: black;
         }
 
-            .result[place="first"] {
-                background-color: gold;
-            }
+        .result[place="first"] {
+            background-color: gold;
+        }
 
-            .result[place="second"] {
-                background-color: silver;
-            }
+        .result[place="second"] {
+            background-color: silver;
+        }
 
-            .result[place="third"] {
-                background-color: brown;
-            }
+        .result[place="third"] {
+            background-color: brown;
+        }
 
-            .result[fail] {
-                background-color: red;
-            }
+        .result[fail] {
+            background-color: red;
+        }
 
         .hidden {
             display: none;
@@ -119,7 +120,7 @@
     <h2 id="top">Buzzer Host - You are currently hosting a game. Game code for players to join: <span id="code">w3ww3w</span></h2>
     <div id="options">
         <h1>Allow Joining</h1>
-        <input style="height:50px" type="checkbox" checked>
+        <input id="allow" style="height:50px;" type="checkbox" checked>
         <button id="start">Start</button>
         <button id="disband">Disband</button>
     </div>
@@ -148,6 +149,58 @@
     <script>
         const socket = io();
 
+        const allow = document.getElementById("allow");
+        const start = document.getElementById("start");
+        const disband = document.getElementById("disband");
+
+        var allowedToStart = true;
+
+        //Enable / disable joining
+        allow.oninput = e => {
+            var prev = !allow.checked;
+            app.request({ password: localStorage.getItem("password") }, "/api/host", "PUT", { enabled: allow.checked ? true : false }, undefined, (statusCode, payload) => {
+                if (statusCode != 200) {
+                    allow.checked = prev;
+                }
+            });
+        };
+
+        //Start / enable buzzing
+        start.onclick = e => {
+            start.innerHTML = "Starting";
+            //Clear results
+            showResults([]);
+            start.setAttribute("disabled", undefined);
+            app.request({ password: localStorage.getItem("password") }, "/api/start", "POST", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    start.innerHTML = "Buzzable";
+                    //Wait for thing to be done
+                    socket.once("done", () => {
+                        start.removeAttribute("disabled");
+                        start.innerHTML = "Start";
+                        allowedToStart = true;
+                    });
+                }
+                else {
+                    alert("Could not start");
+                    start.innerHTML = "Start";
+                    start.removeAttribute("disabled");
+                }
+            });
+        };
+
+        //Disband
+        disband.onclick = e => {
+            app.request({ password: localStorage.getItem("password") }, "/api/host", "DELETE", undefined, undefined, (statusCode, payload) => {
+                if (statusCode == 200) {
+                    window.location.replace("/");
+                }
+                else {
+                    alert("Couldn't disband party");
+                }
+            });
+        };
+
         const code = document.getElementById("code");
         //Try to get password
         if (localStorage.getItem("password")) {
@@ -158,10 +211,12 @@
                         password: localStorage.getItem("password"),
                         type: "host"
                     });
+                    allow.checked = payload.joiningAllowed;
                     code.innerHTML = payload.id;
                 }
                 else {
                     alert("Your game no longer exists");
+                    localStorage.removeItem("password");
                     window.location.replace("/create");
                 }
             });
@@ -170,12 +225,12 @@
             alert("You are not hosting a game");
             window.location.replace("/create");
         }
-        
-        
+
+
         //Show players
         const players = document.getElementById("players");
         const player = document.getElementById("player");
-        function showPlayers(names){
+        function showPlayers(names) {
             players.innerHTML = "";
             names.forEach(name => {
                 var newPlayer = player.cloneNode(true);
@@ -185,27 +240,27 @@
                 players.appendChild(newPlayer);
             });
         };
-        
+
         //Show results
         const results = [document.getElementById("result1"), document.getElementById("result2"), document.getElementById("result3"), document.getElementById("result4"), document.getElementById("result5")];
-        function showResults(data){
-            for(var i = 0; i < 5; i++){
-                let result = results[i];
-                if(i in data){
-                    result.classList.remove("hidden");
-                    result.innernHTML = data[i].animal;
-                    if(data[i].fail){
-                        result.setAttribute("fail", undefined);
-                    }
-                    else{
-                        result.removeAttribute("fail");    
-                    }
+        function showResults(data) {
+            for (var i = 0; i < 5; i++) {
+                if (i in data) {
+                    results[i].classList.remove("hidden");
+                    results[i].innerText = data[i];
                 }
-                else{
-                    result.classList.add("hidden");
+                else {
+                    results[i].classList.add("hidden");
                 }
             }
         };
+
+        socket.on("results", animals => {
+            showResults(animals);
+        });
+        socket.on("players", animals => {
+            showPlayers(animals);
+        });
     </script>
 </body>
 </html>

@@ -3,35 +3,40 @@
 <head>
     <title>Buzzer Host</title>
     <style>
-        html, body{
+        html, body {
             margin: 0;
             padding: 0;
             overflow: hidden;
         }
-        #explainer{
+
+        #explainer {
             margin: 0;
-            padding: 50;
+            padding: 50px;
             text-align: center;
             background-color: lightblue;
         }
-        #explainer *{
-            margin: 0; 
-            padding: 25px;
-            color: purple;
-        }
+
+            #explainer * {
+                margin: 0;
+                padding: 25px;
+                color: purple;
+            }
+
         #grid {
             display: grid;
             grid-template-columns: 50% 50%;
             text-align: center;
         }
-        #enter{
+
+        #enter {
             position: absolute;
             width: 50%;
             height: 100%;
             background-color: gold;
             color: forestgreen;
         }
-        #not{
+
+        #not {
             position: absolute;
             width: 50%;
             left: 50%;
@@ -39,10 +44,12 @@
             background-color: forestgreen;
             color: white;
         }
-        #enter *, #not *{
-            padding: 25px;
-        }
-        #code{
+
+            #enter *, #not * {
+                padding: 25px;
+            }
+
+        #code {
             padding: 0px;
             width: 300px;
             text-align: center;
@@ -50,14 +57,16 @@
             border: 5px solid forestgreen;
             font-size: 50px;
         }
-        #join{
+
+        #join {
             width: 300px;
             background-color: forestgreen;
             border-radius: 100000px;
-            color: white;   
+            color: white;
             font-size: 50px;
         }
     </style>
+    <script src="/app.js"></script>
 </head>
 <body>
     <div id="explainer">
@@ -81,13 +90,35 @@
         </div>
     </div>
     <script>
+        app.check();
+
         const form = document.getElementById("form");
         
         form.onsubmit = e => {
             e.preventDefault();
-            
-            if(form.code.value.length.trim() == 6){
+
+            if (form.code.value.trim().length == 6) {
                 //Try to join via REST.
+                app.request(undefined, "/api/join", "POST", { game: form.code.value }, undefined, (statusCode, payload) => {
+                    if (statusCode == 200) {
+                        //Store the stuffs
+                        localStorage.setItem("password", payload.password);
+                        localStorage.setItem("passwordType", "player");
+
+                        //Redirect to play
+                        window.location.replace("/play");
+                    }
+                    else if (statusCode == 404) {
+                        alert("Invalid code");
+                    }
+                    else {
+                        alert("Could not join game");
+                        window.location.reload();
+                    }
+                });
+            }
+            else {
+                alert("Invalid code");
             }
         };
     </script>
