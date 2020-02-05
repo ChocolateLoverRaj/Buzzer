@@ -78,7 +78,10 @@ class Game {
         for (let animal in this.players) {
             if (this.players[animal].socket.once) {
                 this.players[animal].socket.emit("canBuzz", startTime);
-                this.players[animal].socket.once("buzz", this.onBuzz.bind(this, animal));
+                //Start checking for the buzz at start time
+                setTimeout(() => {
+                    this.players[animal].socket.once("buzz", this.onBuzz.bind(this, animal));
+                }, startTime - Date.now());
             }
         }
         //End after 5 seconds after start time
